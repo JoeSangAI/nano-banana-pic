@@ -1,0 +1,9 @@
+# 切勿提交 API 密钥
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.pyc
+.DS_Store
