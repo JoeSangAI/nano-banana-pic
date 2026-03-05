@@ -23,8 +23,28 @@ EDIT_PROMPT_TEMPLATE = (
     "Do not add new objects. If text exists, keep it unchanged."
 )
 
+# Infographic System Prompt (High Density Information)
+INFOGRAPHIC_SYSTEM_PROMPT = """
+ACT AS AN EXPERT INFORMATION DESIGNER.
+You are generating a HIGH-DENSITY INFOGRAPHIC or BENTO GRID layout.
 
-def generate_image(prompt, model, aspect_ratio, output_path, number, input_image_paths=None, resolution="1K", use_edit_template=False):
+Visual Style Guidelines:
+1. **Layout**: Use a modular "Bento Grid" or "Dashboard" layout. Organize information into distinct, rounded rectangular cards or glass panes.
+2. **Hierarchy**: One main visual anchor (hero image/chart) takes up 30-40% of the space. Surrounding modules contain supporting metrics, icons, or text snippets.
+3. **Aesthetics**: Modern, clean, and professional. Use "Liquid Glass" (glassmorphism) or "Flat Vector" style.
+   - Glassmorphism: Semi-transparent frosted glass cards, subtle white borders, soft drop shadows, blurred background.
+   - Flat Vector: Bold colors, clean lines, minimal gradients, high contrast.
+4. **Content Representation**:
+   - Use ICONS to represent concepts (e.g., a shield for security, a leaf for eco-friendly).
+   - Use stylized CHARTS (bar bars, donut charts) for data.
+   - Use bold TYPOGRAPHY for headers (render text clearly if specified in prompt).
+5. **Density**: The image should feel "information-rich" but not cluttered. Balanced negative space is key.
+
+USER REQUEST:
+{user_instruction}
+"""
+
+def generate_image(prompt, model, aspect_ratio, output_path, number, input_image_paths=None, resolution="1K", use_edit_template=False, style=None):
     api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
     
     # Check for .env file in script directory if env var not set
@@ -53,9 +73,18 @@ def generate_image(prompt, model, aspect_ratio, output_path, number, input_image
         resolution = "1K"
 
     effective_prompt = prompt
+    
+    # Auto-detect infographic intent if style not explicitly set
+    if not style and any(kw in prompt.lower() for kw in ["infographic", "bento grid", "information map", "data visualization", "info card", "信息图", "全景图"]):
+        style = "infographic"
+        print("💡 Auto-detected Infographic intent. Switching to Infographic Mode.")
+
     if input_image_paths and use_edit_template:
         effective_prompt = EDIT_PROMPT_TEMPLATE.format(user_instruction=prompt)
         print("Using edit prompt template (preserve unchanged areas)")
+    elif style == "infographic":
+        effective_prompt = INFOGRAPHIC_SYSTEM_PROMPT.format(user_instruction=prompt)
+        print("Using Infographic System Prompt (High Density Layout)")
 
     print(f"Generating {number} image(s) with model '{model}'...")
     print(f"Resolution: {resolution}")
@@ -179,6 +208,7 @@ def main():
     parser.add_argument("--output", help="Output file path")
     parser.add_argument("--input-image", nargs='+', help="Path(s) to input image(s)")
     parser.add_argument("--edit-template", action="store_true", help="Use edit template to preserve unchanged areas")
+    parser.add_argument("--style", choices=["infographic"], help="Force specific generation style (e.g., infographic)")
     parser.add_argument("--number", type=int, default=1, help="Number of images to generate (1-4)")
 
     args = parser.parse_args()
@@ -203,6 +233,7 @@ def main():
         args.input_image,
         resolution=args.resolution,
         use_edit_template=args.edit_template,
+        style=args.style,
     )
 
 if __name__ == "__main__":
