@@ -217,7 +217,7 @@ def main():
         date_str = datetime.now().strftime("%Y%m%d")
         safe_prompt = "".join(c for c in args.prompt[:50] if c.isalnum() or c in (' ', '_', '-')).strip().replace(' ', '_')
         filename = f"{date_str}_{safe_prompt}.png"
-        output_base = os.environ.get("GEMINI_OUTPUT_DIR") or "output"
+        output_base = os.environ.get("GEMINI_OUTPUT_DIR") or "/Users/Joe_1/Desktop/AI output"
         output_dir = Path(output_base) / "images"
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / filename
