@@ -46,7 +46,8 @@ USER REQUEST:
 
 def generate_image(prompt, model, aspect_ratio, output_path, number, input_image_paths=None, resolution="1K", use_edit_template=False, style=None):
     api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
-    
+    base_url = os.environ.get("GEMINI_BASE_URL")
+
     # Check for .env file in script directory if env var not set
     env_path = Path(__file__).parent / ".env"
     if env_path.exists():
@@ -55,6 +56,8 @@ def generate_image(prompt, model, aspect_ratio, output_path, number, input_image
                 for line in f:
                     if line.strip().startswith("GOOGLE_API_KEY=") and not api_key:
                         api_key = line.strip().split("=", 1)[1].strip('"').strip("'")
+                    if line.strip().startswith("GEMINI_BASE_URL=") and not base_url:
+                        base_url = line.strip().split("=", 1)[1].strip('"').strip("'")
                     if line.strip().startswith("GEMINI_OUTPUT_DIR="):
                         val = line.strip().split("=", 1)[1].strip('"').strip("'")
                         if not os.environ.get("GEMINI_OUTPUT_DIR"):
@@ -66,7 +69,11 @@ def generate_image(prompt, model, aspect_ratio, output_path, number, input_image
         print("Error: GOOGLE_API_KEY or GEMINI_API_KEY environment variable not set.")
         sys.exit(1)
 
-    client = genai.Client(api_key=api_key)
+    client_kwargs = {"api_key": api_key}
+    if base_url:
+        client_kwargs["http_options"] = {"base_url": base_url}
+
+    client = genai.Client(**client_kwargs)
 
     resolution = (resolution or "1K").upper()
     if resolution not in ("1K", "2K", "4K"):
@@ -203,7 +210,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate images using Gemini API")
     parser.add_argument("--prompt", required=True, help="Text description of the image")
     parser.add_argument("--model", default="gemini-3.1-flash-image-preview", help="Model name")
-    parser.add_argument("--aspect-ratio", default="1:1", choices=["1:1", "16:9", "9:16", "4:3", "3:4", "21:9"], help="Aspect ratio")
+    parser.add_argument("--aspect-ratio", default="1:1", choices=["1:1", "16:9", "9:16", "4:3", "3:4", "21:9", "1:4", "1:2", "2:1"], help="Aspect ratio")
     parser.add_argument("--resolution", default="1K", choices=["1K", "2K", "4K"], help="Output resolution: 1K|2K|4K")
     parser.add_argument("--output", help="Output file path")
     parser.add_argument("--input-image", nargs='+', help="Path(s) to input image(s)")
