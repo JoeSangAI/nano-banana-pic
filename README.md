@@ -1,45 +1,115 @@
-# Gemini Image Gen / Nano Banana Pic
+# Nano Banana Pic
 
-使用 Google Gemini API（Imagen 3 / Nano Banana 2）进行高质量的文生图、垫图与图片文字编辑。支持 1K/2K/4K 分辨率与原图结构保护。
+使用 DeerAPI + Gemini API 进行高质量文生图、垫图重绘与海报文字无损替换。支持 1K/2K/4K 分辨率，多种比例（1:1、16:9、9:16、1:4、21:9 等）。
 
-**密钥：** 需使用环境变量 `GOOGLE_API_KEY` 或在本目录下新建 `.env` 填入（请勿提交 `.env`）。
-**依赖：** `pip install google-genai pillow`
+> 项目地址：[JoeSangAI/nano-banana-pic](https://github.com/JoeSangAI/nano-banana-pic)
 
-## 🌟 核心功能一：图像生成与重绘
+## 环境配置
 
-在项目根目录（或 Cursor 终端）执行：
+**密钥：** 在本目录下新建 `.env`，填入 `DEER_API_KEY=your_key_here`（请勿提交 `.env`）。
+
+**依赖：**
+```bash
+pip install requests pillow python-dotenv
+```
+
+## 图像生成
+
+### 命令行
 
 ```bash
-# 1. 基础文生图 (默认 1K 分辨率)
-python3 tools/nano_banana_pic/generate_image.py --prompt "夕阳下的海边小镇，暖色调"
+# 基础文生图（默认 1K, 1:1）
+python3 generate_image.py --prompt “夕阳下的海边小镇，暖色调”
 
-# 2. 指定高分辨率出图 (最高 4K)
-python3 tools/nano_banana_pic/generate_image.py --prompt "科技感会议室" --resolution 4K
+# 指定分辨率（1K / 2K / 4K）
+python3 generate_image.py --prompt “科技感会议室” --resolution 4K
 
-# 3. 垫图局部重绘 (利用 --edit-template 智能保护原图主体和构图)
-python3 tools/nano_banana_pic/generate_image.py --prompt "把天空改成傍晚" --input-image 原图.png --edit-template
+# 指定比例（竖版横版方图外，还支持 1:4 竖长图、21:9 宽屏等）
+python3 generate_image.py --prompt “赛博朋克咖啡馆” --aspect-ratio 16:9
+
+# 垫图重绘（保留原图构图，AI 局部修改）
+python3 generate_image.py --prompt “把天空改成傍晚” --input-image 原图.png
+
+# 垫图 + 结构保护（智能保留主体、构图、光影）
+python3 generate_image.py --prompt “把天空改成傍晚” --input-image 原图.png --edit-template
+
+# 一次生成多张
+python3 generate_image.py --prompt “咖啡馆插画” --number 4
+
+# 信息图模式（高密度数据布局、Bento Grid 风格）
+python3 generate_image.py --prompt “AI 增长数据信息图” --style infographic
 ```
-*Tip: 在 Cursor 中直接对 AI 说：“用 Nano Banana 帮我画一张赛博朋克风格的咖啡馆，比例 16:9” 即可自动执行。*
+
+### 支持的比例
+
+| 比例 | 说明 |
+|------|------|
+| `1:1` | 方图（头像/封面） |
+| `16:9` | 横图（PPT/宽屏） |
+| `9:16` | 竖图（手机壁纸） |
+| `4:3` / `3:4` | 传统比例 |
+| `2:3` / `3:2` | 摄影比例 |
+| `1:4` / `4:1` | 超长竖图/横图 |
+| `1:2` / `2:1` | 宽幅 |
+| `21:9` | 电影宽屏 |
+
+### 推荐工作流
+
+1. **1K 草图** → 快速试 prompt，确认构图和风格
+2. **2K 调整** → 满意后提升分辨率做精细调整
+3. **4K 最终出图** → 用于正式使用
 
 ---
 
-## 🌟 核心功能二：海报文字无损替换 (Advanced Text Editing)
+## 海报文字无损替换
 
-这是专门针对“生成出来的海报文字不对/有拼写错误”的终极解决方案。它可以**在完全不破坏原图画风、构图和人物特征的前提下，精准替换图中的指定文字**。
+在不破坏原图画风、构图和人物特征的前提下，精准替换图中的指定文字。
 
-### 工作流 (Cursor 中的交互方法)
+### 步骤 1：提取文字
 
-你不需要手动敲代码，只需在 Cursor 中用自然语言按以下两步使唤 AI 即可：
+```bash
+python3 extract_text.py --image 你的海报.png
+```
 
-**步骤 1：提取文字并编辑**
-* **用户指令：** *"帮我把 `output/images/你的海报.png` 这张图的文字提取出来。"*
-* AI 会自动运行 `extract_text.py`，并在同目录下生成一个 `.md` 文件。
-* **你的操作：** 打开生成的这个 `.md` 文件，找到 `# 海报文本内容` 下方的文字，把你想要改的字直接改成新的内容，保存文件。
+脚本会自动调用 Gemini 识别图中所有文字，生成同目录下的 `.md` 文件。
 
-**步骤 2：执行精准替换**
-* **用户指令：** *"我改好了那个 md 文件，按 4K 分辨率重新生成吧。"*
-* AI 会自动运行 `replace_text.py`。
-* **结果：** 脚本会自动进行文本差异对比 (Diff)，并生成一张带有 `_text_edited.png` 后缀的新图片。新图的画面完全不变，但文字已经完美替换为你修改后的内容！
+### 步骤 2：编辑文字
+
+打开 `.md` 文件，找到 `# 海报文本内容` 区域，直接修改文字，保存。
+
+### 步骤 3：重新生成
+
+```bash
+python3 replace_text.py --md-file 你的海报.md --resolution 4K
+```
+
+生成一张 `_text_edited.png`，画面完全不变，文字已替换。
+
+---
+
+## 海报 Prompt 模板
+
+项目内置 `poster_templates.py`，提供混沌风格（Chaos Style）的海报 prompt 模板：
+
+```python
+from prompt_templates import PosterTemplate
+
+t = PosterTemplate()
+prompt = t.build(
+    product_name=”理森咨询”,
+    hook_line=”帮你理清生意”,
+    slogan=”理森咨询 · 认知升维”,
+    philosophy=[“深度思考”, “原创方法”, “实战落地”],
+    services=[
+        {“num”: “01”, “label”: “【看懂方向】”, “title”: “战略规划”, “desc”: “帮你在迷雾中找准定位”}
+    ],
+    founder_cred=[“连续创业者”, “服务过50+企业”],
+    team_cred=”理森团队”,
+    audience=[“创业者”, “企业高管”, “转型期企业主”],
+    pricing={“original”: “¥2980”, “price”: “¥1980”, “badge”: “前50名限额特惠”}
+)
+print(prompt)
+```
 
 ---
 
