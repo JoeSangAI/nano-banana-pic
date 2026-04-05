@@ -96,31 +96,18 @@ from prompt_templates import PosterTemplate
 
 t = PosterTemplate()
 prompt = t.build(
-    product_name=”理森咨询”,
-    hook_line=”帮你理清生意”,
-    slogan=”理森咨询 · 认知升维”,
-    philosophy=[“深度思考”, “原创方法”, “实战落地”],
+    product_name=”AI Master”,
+    hook_line=”Master AI in 30 Days”,
+    slogan=”AI Master · Future Skills”,
+    philosophy=[“Deep Learning”, “Hands-on Projects”, “Real Results”],
     services=[
-        {“num”: “01”, “label”: “【看懂方向】”, “title”: “战略规划”, “desc”: “帮你在迷雾中找准定位”}
+        {“num”: “01”, “label”: “【Day 1-10】”, “title”: “Foundations”, “desc”: “Build your AI fundamentals”}
     ],
-    founder_cred=[“连续创业者”, “服务过50+企业”],
-    team_cred=”理森团队”,
-    audience=[“创业者”, “企业高管”, “转型期企业主”],
-    pricing={“original”: “¥2980”, “price”: “¥1980”, “badge”: “前50名限额特惠”}
+    founder_cred=[“PhD in ML”, “Ex-Google Engineer”],
+    team_cred=”AI Master Team”,
+    audience=[“Engineers”, “Product Managers”, “Tech Enthusiasts”],
+    pricing={“original”: “$299”, “price”: “$99”, “badge”: “Early Bird”}
 )
 print(prompt)
 ```
 
----
-
-## 📅 更新日志 (Changelog)
-
-### [v1.1.0] - 2026-03-08
-**🚀 新特性 (New Features)**
-* **海报文字无损替换工作流**：新增 `extract_text.py` 与 `replace_text.py` 两个核心脚本。
-* **智能 Diff 提示词系统**：文字替换时自动对比新旧文本差异，生成极度精确的局部重绘指令。
-* **严格语言约束**：彻底解决了大模型重绘时强行将中文翻译为英文或出现乱码的问题，强制模型忠实渲染用户输入的各种语言（含中文）。
-
-**🛠 优化与修复 (Improvements & Fixes)**
-* **YAML 解析稳定性**：修复了提取文本中包含回车符、双引号等特殊字符时导致 Markdown Frontmatter 解析崩溃的问题。
-* **分辨率锁定**：文本替换流程默认使用超清模式渲染，并加入“禁止模糊”和“保持锐度”的底层安全提示词。
