@@ -33,11 +33,32 @@ def main():
         print("Error: DEER_API_KEY not found in .env")
         sys.exit(1)
 
+    # 自动压缩参考图片（超过 500KB 则压缩）
+    def compress_image(path, max_size_kb=500):
+        size_kb = os.path.getsize(path) / 1024
+        if size_kb <= max_size_kb:
+            return path
+        img = Image.open(path)
+        # 计算缩放比例
+        ratio = (max_size_kb / size_kb) ** 0.5
+        new_size = (int(img.width * ratio), int(img.height * ratio))
+        img = img.resize(new_size, Image.LANCZOS)
+        buf = BytesIO()
+        fmt = "PNG" if path.lower().endswith(".png") else "JPEG"
+        img.save(buf, format=fmt, quality=85)
+        compressed_path = path.rsplit(".", 1)[0] + "_compressed." + path.rsplit(".", 1)[1].lower()
+        with open(compressed_path, "wb") as f:
+            f.write(buf.getvalue())
+        orig_size_kb = os.path.getsize(path) / 1024
+        new_size_kb = os.path.getsize(compressed_path) / 1024
+        print(f"  压缩: {orig_size_kb:.0f}KB → {new_size_kb:.0f}KB → {compressed_path}")
+        return compressed_path
+
     # 构建输出路径
     if not args.output:
         date_str = datetime.now().strftime("%Y%m%d")
-        output_base = os.getenv("GEMINI_OUTPUT_DIR") or str(Path.home() / "Desktop" / "AI output")
-        output_dir = Path(output_base) / "images"
+        output_base = os.getenv("GEMINI_OUTPUT_DIR") or "/Users/Joe_1/Desktop/AI output/pic"
+        output_dir = Path(output_base)
         output_dir.mkdir(parents=True, exist_ok=True)
         safe = "".join(c for c in args.prompt[:40] if c.isalnum() or c in (" ", "_")).strip()
         output_path = output_dir / f"{date_str}_{safe}.png"
@@ -49,6 +70,8 @@ def main():
     parts = [{"text": args.prompt}]
 
     if args.input_image:
+        # 自动压缩过大的图片
+        args.input_image = [compress_image(p) for p in args.input_image]
         for path in args.input_image:
             if not os.path.exists(path):
                 print(f"Error: Image not found: {path}")
