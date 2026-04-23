@@ -14,6 +14,8 @@ Nano Banana Pic 是一家**没有人的 4A 广告公司**。
 
 它把一位资深 **PM（客户经理）** 和一位 **Creative Director（视觉总监）** 的协作流程，用两个 AI Agent 完整还原。你只需要说出你的想法，剩下的——需求梳理、方向提案、Prompt 打磨、出图校验——全部自动完成。
 
+底层支持 **Gemini** 和 **GPT Image** 双引擎，按需切换，出图质量更稳定。
+
 **你不是在用 AI 画图，你是在委托一家广告公司。**
 
 ---
@@ -125,8 +127,11 @@ echo "DEER_API_KEY=your_key_here" > .env
 ## 命令行使用
 
 ```bash
-# 基础文生图
+# 基础文生图（默认 gpt-image-2）
 python3 generate_image.py --prompt "夕阳下的海边小镇，暖色调"
+
+# 切换模型为 Gemini
+python3 generate_image.py --prompt "夕阳下的海边小镇，暖色调" --model gemini-3.1-flash-image-preview
 
 # 指定分辨率
 python3 generate_image.py --prompt "科技感会议室" --resolution 4K
@@ -134,11 +139,11 @@ python3 generate_image.py --prompt "科技感会议室" --resolution 4K
 # 指定比例
 python3 generate_image.py --prompt "赛博朋克咖啡馆" --aspect-ratio 16:9
 
-# 垫图重绘（保留构图）
-python3 generate_image.py --prompt "把天空改成傍晚" --input-image 原图.png
+# 垫图重绘（仅 Gemini 支持）
+python3 generate_image.py --prompt "把天空改成傍晚" --input-image 原图.png --model gemini-3.1-flash-image-preview
 
-# 垫图 + 结构保护
-python3 generate_image.py --prompt "把天空改成傍晚" --input-image 原图.png --edit-template
+# 垫图 + 结构保护（仅 Gemini 支持）
+python3 generate_image.py --prompt "把天空改成傍晚" --input-image 原图.png --edit-template --model gemini-3.1-flash-image-preview
 
 # 一次生成多张
 python3 generate_image.py --prompt "咖啡馆插画" --number 4
@@ -146,6 +151,15 @@ python3 generate_image.py --prompt "咖啡馆插画" --number 4
 # 信息图模式
 python3 generate_image.py --prompt "AI 增长数据信息图" --style infographic
 ```
+
+### 模型对比
+
+| 能力 | `gpt-image-2`（默认） | `gemini-3.1-flash-image-preview` |
+|------|----------------------|--------------------------------|
+| 基础文生图 | ✅ | ✅ |
+| 垫图/参考图 | ❌ | ✅ |
+| 1K/2K/4K 分辨率 | 部分重映射 | 原生支持 |
+| 超长比例（1:4 / 21:9） | ❌ | ✅ |
 
 ---
 

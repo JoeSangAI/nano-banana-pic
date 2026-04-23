@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.3.0] - 2026-04-23
+
+### 🚀 新特性
+- **多模型支持**：新增 `gpt-image-2` 模型（OpenAI Images API），与 Gemini 并行可选
+- **默认模型切换**：默认从 Gemini 切换为 `gpt-image-2`，出图质量更稳定
+- **模型配置化**：引入 `MODEL_CONFIGS` 统一配置不同提供商的模型参数（endpoint、分辨率策略等）
+- **GPT Image 尺寸映射**：新增 `GPT_IMAGE_SIZES` 映射表，将 `--resolution` + `--aspect-ratio` 自动转换为 OpenAI 支持的 `size` 参数
+
+### ⚠️ 已知限制
+- `gpt-image-2` 暂不支持参考图片（`--input-image` / 垫图），使用时会自动忽略该参数并提示
+- GPT Image 的 4K/2K 方形请求会被重映射，实际输出尺寸与请求值可能不完全一致
+
 ## [v1.2.0] - 2026-04-05
 
 ### 🚀 新特性
