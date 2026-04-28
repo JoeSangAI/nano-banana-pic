@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.0] - 2026-04-28
+
+### 🚀 新特性
+- **默认模型升级**：全面切换至 `gpt-image-2-all`，出图质量更稳定，中文文字渲染效果更好
+- **垫图生成支持**：新增 `generate_gpt_image_edit()`，通过 DeerAPI `/v1/images/edits` 端点实现 image-to-image，支持单张主图 + 多张附加参考图
+- **视觉总监策略升级**：Prompt 构建从"结构化公式"改为"意图翻译 + 关键约束"，提案从线框图思维改为情绪板思维，充分激发模型审美能力
+
+### 📖 文档更新
+- **README 全面重写**：以 `gpt-image-2-all` 为主模型重新描述能力，去掉过时的 4K/超长比例误导，明确标注各模型真实支持范围
+- **DeerAPI 推荐**：文档中明确推荐 DeerAPI 作为首选 API 提供商，国内直连、稳定、一个 Key 通用多模型
+- **新增模型对比表**：清晰对比 `gpt-image-2-all` 与 `gemini-3.1-flash-image-preview` 的能力差异，帮助用户按需选择
+
+### ⚠️ 已知限制
+- `gpt-image-2-all` 原生仅支持 1024×1024 / 1536×1024 / 1024×1536 三种尺寸，不支持 1:4 / 21:9 等超长比例
+- `gpt-image-2-all` 的 2K/4K 为 DeerAPI 扩展映射，实际输出由模型端决定，如需真 4K 请切换至 Gemini
+- `replace_text.py` 仍依赖 Google genai SDK，建议配置 `GEMINI_BASE_URL` 指向 DeerAPI 以保证兼容性
+
 ## [v1.3.0] - 2026-04-23
 
 ### 🚀 新特性
