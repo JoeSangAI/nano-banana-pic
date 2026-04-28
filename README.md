@@ -49,9 +49,9 @@ Nano Banana Pic 是一家**没有人的 4A 广告公司**。
 
 ### 🖼️ 垫图生成（Image-to-Image）
 
-支持以产品图、参考图为素材，让模型在保留原图核心元素的基础上生成新画面。
+如果你已有产品图、参考图或风格参考，Nano Banana Pic 会在工作流中帮你判断每张图的最佳用法——是作为构图参考、风格参考，还是素材元素，并在 prompt 中精准描述它们的作用。
 
-底层通过 DeerAPI 的 `/v1/images/edits` 端点调用 `gpt-image-2-all`，支持单张主图 + 多张附加参考图。
+底层调用 `gpt-image-2-all` 或 Gemini 的 image-to-image 能力，你不需要关心 API 细节。
 
 ### ✍️ 海报文字无损替换
 
@@ -178,7 +178,7 @@ python3 generate_image.py --prompt "AI 增长数据信息图" --style infographi
 
 **先低分辨率试错，再高分辨率出图**——这是专业设计师的工作方式，不是靠运气。
 
-> 注：`gpt-image-2-all` 的 2K/4K 为 DeerAPI 的扩展映射，实际输出尺寸由模型端决定。如需真 4K，请切换至 `gemini-3.1-flash-image-preview`。
+> 注：`gpt-image-2-all` 原生输出为 1K（1024px 级别），清晰度已经足够日常出图、海报、电商详情页等场景。如需 4K 或超长比例，请切换至 `gemini-3.1-flash-image-preview`。
 
 ---
 

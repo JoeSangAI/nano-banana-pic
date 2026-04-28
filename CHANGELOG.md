@@ -16,7 +16,7 @@ All notable changes to this project will be documented in this file.
 
 ### ⚠️ 已知限制
 - `gpt-image-2-all` 原生仅支持 1024×1024 / 1536×1024 / 1024×1536 三种尺寸，不支持 1:4 / 21:9 等超长比例
-- `gpt-image-2-all` 的 2K/4K 为 DeerAPI 扩展映射，实际输出由模型端决定，如需真 4K 请切换至 Gemini
+- `gpt-image-2-all` 原生仅支持 1024×1024 / 1536×1024 / 1024×1536 三种尺寸，输出为 1K 级别。如需 4K 或超长比例，请切换至 `gemini-3.1-flash-image-preview`
 - `replace_text.py` 仍依赖 Google genai SDK，建议配置 `GEMINI_BASE_URL` 指向 DeerAPI 以保证兼容性
 
 ## [v1.3.0] - 2026-04-23
@@ -29,7 +29,7 @@ All notable changes to this project will be documented in this file.
 
 ### ⚠️ 已知限制
 - `gpt-image-2` 暂不支持参考图片（`--input-image` / 垫图），使用时会自动忽略该参数并提示
-- GPT Image 的 4K/2K 方形请求会被重映射，实际输出尺寸与请求值可能不完全一致
+- `gpt-image-2` 原生输出为 1K（1024px 级别），不支持 2K/4K
 
 ## [v1.2.0] - 2026-04-05
 
