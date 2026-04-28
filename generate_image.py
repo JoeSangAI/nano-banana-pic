@@ -26,6 +26,11 @@ MODEL_CONFIGS = {
         "endpoint": "v1",
         "supports_aspect_ratio": True,  # 通过 size 参数控制
     },
+    "gpt-image-2-all": {
+        "provider": "openai",
+        "endpoint": "v1",
+        "supports_aspect_ratio": True,
+    },
 }
 
 # gpt-image-2 尺寸映射 (resolution + aspect-ratio → size)
@@ -105,8 +110,26 @@ def generate_gemini(model, prompt, parts, aspect_ratio, resolution, api_key, bas
                     time.sleep(5)
 
 
-def generate_gpt_image(api_key, base_url, prompt, size, output_path, number):
-    """Generate images using OpenAI Images API endpoint with gpt-image-2"""
+def _save_b64_response(result, output_path, number, index):
+    """从 API 响应中提取 base64 图片并保存"""
+    b64_data = result.get("data", [{}])[0].get("b64_json", "")
+    if not b64_data:
+        return None
+    if "," in b64_data:
+        b64_data = b64_data.split(",")[1]
+    img_bytes = base64.b64decode(b64_data)
+    final_path = output_path
+    if number > 1:
+        final_path = output_path.parent / f"{output_path.stem}_{index+1}{output_path.suffix}"
+    with open(final_path, "wb") as f:
+        f.write(img_bytes)
+    img = Image.open(BytesIO(img_bytes))
+    print(f"  ✅ Saved: {final_path} ({img.size[0]}x{img.size[1]}, {len(img_bytes)/1024/1024:.1f}MB)")
+    return final_path
+
+
+def generate_gpt_image(api_key, base_url, prompt, size, output_path, number, model):
+    """Generate images using OpenAI Images API endpoint"""
     url = f"{base_url.rstrip('/')}/v1/images/generations"
     headers = {
         "Content-Type": "application/json",
@@ -119,7 +142,7 @@ def generate_gpt_image(api_key, base_url, prompt, size, output_path, number):
             try:
                 start = time.time()
                 payload = {
-                    "model": "gpt-image-2",
+                    "model": model,
                     "prompt": prompt,
                     "size": size,
                     "n": 1,
@@ -130,22 +153,59 @@ def generate_gpt_image(api_key, base_url, prompt, size, output_path, number):
                 print(f"  Status: {resp.status_code}, Time: {elapsed:.1f}s")
 
                 if resp.status_code == 200:
-                    result = resp.json()
-                    b64_data = result.get("data", [{}])[0].get("b64_json", "")
-                    if b64_data:
-                        # Handle data URI format: data:image/webp;base64,...
-                        if "," in b64_data:
-                            b64_data = b64_data.split(",")[1]
-                        img_bytes = base64.b64decode(b64_data)
-                        final_path = output_path
-                        if number > 1:
-                            final_path = output_path.parent / f"{output_path.stem}_{i+1}{output_path.suffix}"
-                        with open(final_path, "wb") as f:
-                            f.write(img_bytes)
-                        img = Image.open(BytesIO(img_bytes))
-                        print(f"  ✅ Saved: {final_path} ({img.size[0]}x{img.size[1]}, {len(img_bytes)/1024/1024:.1f}MB)")
-                    else:
-                        print(f"  No b64_json in response: {result}")
+                    _save_b64_response(resp.json(), output_path, number, i)
+                    break
+                else:
+                    print(f"  Error: {resp.text[:200]}")
+                    break
+            except Exception as e:
+                print(f"  Exception: {e}")
+                if attempt < 2:
+                    time.sleep(5)
+
+
+def generate_gpt_image_edit(api_key, base_url, prompt, size, output_path, number, model, reference_images):
+    """Generate images using OpenAI Images Edit API endpoint with reference images (垫图)"""
+    url = f"{base_url.rstrip('/')}/v1/images/edits"
+    headers = {
+        "Authorization": f"Bearer {api_key}"
+    }
+
+    for i in range(number):
+        print(f"\nGenerating image {i+1}/{number}...")
+        for attempt in range(3):
+            try:
+                start = time.time()
+
+                files = []
+                # 主参考图
+                primary_ref = Image.open(reference_images[0])
+                buf = BytesIO()
+                primary_ref.save(buf, format="PNG")
+                buf.seek(0)
+                files.append(("image", ("ref_0.png", buf, "image/png")))
+
+                # 额外参考图
+                for j, ref_path in enumerate(reference_images[1:], 1):
+                    ref_img = Image.open(ref_path)
+                    buf = BytesIO()
+                    ref_img.save(buf, format="PNG")
+                    buf.seek(0)
+                    files.append(("additional_images[]", (f"ref_{j}.png", buf, "image/png")))
+
+                data = {
+                    "model": model,
+                    "prompt": prompt,
+                    "size": size,
+                    "n": "1",
+                }
+
+                resp = requests.post(url, headers=headers, data=data, files=files, timeout=300)
+                elapsed = time.time() - start
+                print(f"  Status: {resp.status_code}, Time: {elapsed:.1f}s")
+
+                if resp.status_code == 200:
+                    _save_b64_response(resp.json(), output_path, number, i)
                     break
                 else:
                     print(f"  Error: {resp.text[:200]}")
@@ -159,7 +219,7 @@ def generate_gpt_image(api_key, base_url, prompt, size, output_path, number):
 def main():
     parser = argparse.ArgumentParser(description="Generate images using DeerAPI + Gemini or GPT Image")
     parser.add_argument("--prompt", required=True, help="Text description")
-    parser.add_argument("--model", default="gpt-image-2",
+    parser.add_argument("--model", default="gpt-image-2-all",
                         choices=list(MODEL_CONFIGS.keys()),
                         help="Model name")
     parser.add_argument("--aspect-ratio", default="1:1", help="Aspect ratio (1:1, 16:9, 9:16, 1:4, 1:8, 4:3, 3:4, 2:3, 3:2, 4:1, 1:2, 2:1, 21:9)")
@@ -210,35 +270,38 @@ def main():
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # 获取模型配置
-    model_config = MODEL_CONFIGS.get(args.model, MODEL_CONFIGS["gemini-3.1-flash-image-preview"])
+    model_config = MODEL_CONFIGS.get(args.model, MODEL_CONFIGS["gpt-image-2-all"])
 
     print(f"Model: {args.model}")
     print(f"Provider: {model_config['provider'].upper()}")
     print(f"Aspect Ratio: {args.aspect_ratio}")
     print(f"Resolution: {args.resolution}")
 
-    # GPT Image 模型不支持参考图片
-    if args.input_image and args.model == "gpt-image-2":
-        print("Warning: gpt-image-2 不支持参考图片，将忽略 --input-image 参数")
-        args.input_image = None
+    # 预处理参考图片（压缩 + 验证）
+    if args.input_image:
+        args.input_image = [compress_image(p) for p in args.input_image]
+        for path in args.input_image:
+            if not os.path.exists(path):
+                print(f"Error: Image not found: {path}")
+                sys.exit(1)
 
     # 根据模型类型选择生成方式
-    if args.model == "gpt-image-2":
+    if model_config["provider"] == "openai":
         # 查找对应的尺寸
         size_key = (args.resolution.upper(), args.aspect_ratio)
         size = GPT_IMAGE_SIZES.get(size_key, "1024x1024")
         print(f"Size: {size}")
-        print(f"Reference Images: 0 (not supported)")
-        generate_gpt_image(api_key, base_url, args.prompt, size, output_path, args.number)
+        if args.input_image:
+            print(f"Reference Images: {len(args.input_image)} (using /images/edits)")
+            generate_gpt_image_edit(api_key, base_url, args.prompt, size, output_path, args.number, args.model, args.input_image)
+        else:
+            print(f"Reference Images: 0")
+            generate_gpt_image(api_key, base_url, args.prompt, size, output_path, args.number, args.model)
     else:
         # 构建 parts（用于 Gemini 模型）
         parts = [{"text": args.prompt}]
         if args.input_image:
-            args.input_image = [compress_image(p) for p in args.input_image]
             for path in args.input_image:
-                if not os.path.exists(path):
-                    print(f"Error: Image not found: {path}")
-                    sys.exit(1)
                 img = Image.open(path)
                 buf = BytesIO()
                 img.save(buf, format="PNG")

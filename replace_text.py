@@ -111,7 +111,7 @@ If there are multiple changes, list them clearly.
         print(f"Warning: Could not compute diff: {e}")
         return f"Update the text to match:\n{new_text}"
 
-def replace_text(md_path, resolution="2K", model="gemini-3.1-flash-image-preview"):
+def replace_text(md_path, resolution="2K", model="gpt-image-2-all"):
     meta, new_text = parse_md(md_path)
     
     base_image_path = meta.get("base_image")
@@ -122,13 +122,17 @@ def replace_text(md_path, resolution="2K", model="gemini-3.1-flash-image-preview
     reference_images = meta.get("reference_images", [])
     
     api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    base_url = os.environ.get("GEMINI_BASE_URL")
     env_path = Path(__file__).parent / ".env"
     if env_path.exists():
         try:
             with open(env_path, "r") as f:
                 for line in f:
-                    if line.strip().startswith("GOOGLE_API_KEY=") and not api_key:
-                        api_key = line.strip().split("=", 1)[1].strip('"').strip("'")
+                    line = line.strip()
+                    if line.startswith("GOOGLE_API_KEY=") and not api_key:
+                        api_key = line.split("=", 1)[1].strip('"').strip("'")
+                    if line.startswith("GEMINI_BASE_URL=") and not base_url:
+                        base_url = line.split("=", 1)[1].strip('"').strip("'")
         except Exception:
             pass
 
@@ -136,7 +140,10 @@ def replace_text(md_path, resolution="2K", model="gemini-3.1-flash-image-preview
         print("Error: API key not set.")
         sys.exit(1)
 
-    client = genai.Client(api_key=api_key)
+    client_kwargs = {"api_key": api_key}
+    if base_url:
+        client_kwargs["http_options"] = {"base_url": base_url}
+    client = genai.Client(**client_kwargs)
     
     # Compare old text to new text and get diff instruction if we know old text
     old_text = meta.get("original_text", "")
@@ -242,7 +249,7 @@ def main():
     parser = argparse.ArgumentParser(description="Replace text in an image based on an edited Markdown file.")
     parser.add_argument("--md-file", required=True, help="Path to the edited Markdown file")
     parser.add_argument("--resolution", default="2K", choices=["1K", "2K", "4K"], help="Output resolution")
-    parser.add_argument("--model", default="gemini-3.1-flash-image-preview", help="Model name")
+    parser.add_argument("--model", default="gpt-image-2-all", help="Model name")
     
     args = parser.parse_args()
     replace_text(args.md_file, args.resolution, args.model)

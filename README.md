@@ -127,7 +127,7 @@ echo "DEER_API_KEY=your_key_here" > .env
 ## 命令行使用
 
 ```bash
-# 基础文生图（默认 gpt-image-2）
+# 基础文生图（默认 gpt-image-2-all）
 python3 generate_image.py --prompt "夕阳下的海边小镇，暖色调"
 
 # 切换模型为 Gemini
@@ -139,8 +139,8 @@ python3 generate_image.py --prompt "科技感会议室" --resolution 4K
 # 指定比例
 python3 generate_image.py --prompt "赛博朋克咖啡馆" --aspect-ratio 16:9
 
-# 垫图重绘（仅 Gemini 支持）
-python3 generate_image.py --prompt "把天空改成傍晚" --input-image 原图.png --model gemini-3.1-flash-image-preview
+# 垫图重绘（默认模型已支持）
+python3 generate_image.py --prompt "把天空改成傍晚" --input-image 原图.png
 
 # 垫图 + 结构保护（仅 Gemini 支持）
 python3 generate_image.py --prompt "把天空改成傍晚" --input-image 原图.png --edit-template --model gemini-3.1-flash-image-preview
@@ -154,10 +154,10 @@ python3 generate_image.py --prompt "AI 增长数据信息图" --style infographi
 
 ### 模型对比
 
-| 能力 | `gpt-image-2`（默认） | `gemini-3.1-flash-image-preview` |
+| 能力 | `gpt-image-2-all`（默认） | `gemini-3.1-flash-image-preview` |
 |------|----------------------|--------------------------------|
 | 基础文生图 | ✅ | ✅ |
-| 垫图/参考图 | ❌ | ✅ |
+| 垫图/参考图 | ✅ | ✅ |
 | 1K/2K/4K 分辨率 | 部分重映射 | 原生支持 |
 | 超长比例（1:4 / 21:9） | ❌ | ✅ |
 

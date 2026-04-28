@@ -12,7 +12,7 @@ Generate high-quality images using Google's Gemini API. Supports Imagen 3 / Nano
 - When the user mentions "Nano Banana 2", "nano-banana-pic", "Gemini Image", or "Imagen".
 
 ## Workflow
-1.  Collect inputs: prompt, aspect ratio (optional), and model name (default: `gemini-3.1-flash-image-preview`).
+1.  Collect inputs: prompt, aspect ratio (optional), and model name (default: `gpt-image-2-all`).
 2.  Ensure `GEMINI_API_KEY` or `GOOGLE_API_KEY` is set in the environment（或在本机 `tools/nano_banana_pic/.env` 中配置，勿提交）。
 3.  **从仓库根目录**运行本机工具：`tools/nano_banana_pic/generate_image.py`。
 4.  Output 保存到 `GEMINI_OUTPUT_DIR` 或默认 `output/images/`。
@@ -56,7 +56,7 @@ python3 -m pip install google-genai pillow
 
 脚本位于工作区 **tools/nano_banana_pic/** 下（与 nano_banana_ppt、feishu_sync 同级）。支持参数：
 - `--prompt`: The text description of the image.
-- `--model`: The model to use (default: `gemini-3.1-flash-image-preview`).
+- `--model`: The model to use (default: `gpt-image-2-all`).
 - `--aspect-ratio`: Aspect ratio (1:1, 16:9, 9:16, etc.).
 - `--resolution`: Output resolution **1K**|**2K**|**4K** (default: 1K). 1K≈1024px, 2K≈2048px, 4K≈4096px. 推荐流程：1K 草图迭代 → 4K 最终出图。
 - `--output`: Output filename (optional).

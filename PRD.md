@@ -244,7 +244,7 @@ contents = [
 | gemini-3-pro-image-preview | 14 张 | 6 张 |
 | **gemini-3.1-flash-image-preview (Nano Banana 2)** | **14 张** | **6 张** |
 
-> **默认模型**：`gemini-3.1-flash-image-preview`（Nano Banana 2）。所有生图请求默认走此模型，除非用户指定其他模型。
+> **默认模型**：`gpt-image-2-all`。所有生图请求默认走此模型，除非用户指定其他模型。
 
 ### 5.3 Prompt 构建规范（调研成果）
 
